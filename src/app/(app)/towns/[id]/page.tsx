@@ -156,9 +156,7 @@ export default function TownDetailPage() {
         .upsert(
           {
             town_id: townId,
-            rent_1r: data.rent_1r,
-            rent_1ldk: data.rent_1ldk,
-            rent_2ldk: data.rent_2ldk,
+            rent_avg: data.rent_avg,
           },
           { onConflict: "town_id" }
         )
@@ -287,31 +285,16 @@ export default function TownDetailPage() {
               </Button>
             )}
           </div>
-          {rent ? (
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-muted rounded-lg p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  1R/1K
-                </div>
-                <div className="font-bold text-primary">
-                  {formatRent(rent.rent_1r)}
-                </div>
+          {rent && rent.rent_avg ? (
+            <div className="text-center bg-muted rounded-lg p-4">
+              <div className="text-xs text-muted-foreground mb-1">
+                周辺の平均家賃
               </div>
-              <div className="bg-muted rounded-lg p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  1LDK
-                </div>
-                <div className="font-bold text-primary">
-                  {formatRent(rent.rent_1ldk)}
-                </div>
+              <div className="text-2xl font-bold text-primary">
+                {formatRent(rent.rent_avg)}
               </div>
-              <div className="bg-muted rounded-lg p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  2LDK
-                </div>
-                <div className="font-bold text-primary">
-                  {formatRent(rent.rent_2ldk)}
-                </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                ※SUUMOの検索結果より算出
               </div>
             </div>
           ) : (

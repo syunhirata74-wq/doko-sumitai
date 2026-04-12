@@ -254,23 +254,17 @@ export type Database = {
         Row: {
           id: string;
           town_id: string;
-          rent_1r: number | null;
-          rent_1ldk: number | null;
-          rent_2ldk: number | null;
+          rent_avg: number | null;
           fetched_at: string;
         };
         Insert: {
           id?: string;
           town_id: string;
-          rent_1r?: number | null;
-          rent_1ldk?: number | null;
-          rent_2ldk?: number | null;
+          rent_avg?: number | null;
           fetched_at?: string;
         };
         Update: {
-          rent_1r?: number | null;
-          rent_1ldk?: number | null;
-          rent_2ldk?: number | null;
+          rent_avg?: number | null;
           fetched_at?: string;
         };
         Relationships: [
