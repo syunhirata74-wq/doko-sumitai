@@ -25,6 +25,8 @@ export type Database = {
           couple_id: string | null;
           name: string;
           avatar_url: string | null;
+          workplace_station: string | null;
+          workplace_station_code: string | null;
           created_at: string;
         };
         Insert: {
@@ -32,12 +34,16 @@ export type Database = {
           couple_id?: string | null;
           name: string;
           avatar_url?: string | null;
+          workplace_station?: string | null;
+          workplace_station_code?: string | null;
           created_at?: string;
         };
         Update: {
           couple_id?: string | null;
           name?: string;
           avatar_url?: string | null;
+          workplace_station?: string | null;
+          workplace_station_code?: string | null;
         };
         Relationships: [
           {
@@ -347,13 +353,42 @@ export type Database = {
           },
         ];
       };
+      town_recommendations: {
+        Row: {
+          id: string;
+          town_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          town_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {};
+        Relationships: [
+          {
+            foreignKeyName: "town_recommendations_town_id_fkey";
+            columns: ["town_id"];
+            isOneToOne: false;
+            referencedRelation: "towns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "town_recommendations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {};
     Functions: {};
   };
 };
-
-// Workaround: removed extra closing brace
 
 export type Couple = Database["public"]["Tables"]["couples"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -365,6 +400,18 @@ export type SpotFavorite = Database["public"]["Tables"]["spot_favorites"]["Row"]
 export type TownRent = Database["public"]["Tables"]["town_rents"]["Row"];
 export type CoupleCondition = Database["public"]["Tables"]["couple_conditions"]["Row"];
 export type ConditionPriority = Database["public"]["Tables"]["condition_priorities"]["Row"];
+export type TownRecommendation = Database["public"]["Tables"]["town_recommendations"]["Row"];
+
+export const FACILITY_TYPES = [
+  { value: "supermarket", label: "スーパー", icon: "🛒", googleType: "supermarket" },
+  { value: "convenience_store", label: "コンビニ", icon: "🏪", googleType: "convenience_store" },
+  { value: "hospital", label: "病院", icon: "🏥", googleType: "hospital" },
+  { value: "pharmacy", label: "薬局", icon: "💊", googleType: "pharmacy" },
+  { value: "park", label: "公園", icon: "🌳", googleType: "park" },
+  { value: "gym", label: "ジム", icon: "🏋️", googleType: "gym" },
+  { value: "restaurant", label: "飲食店", icon: "🍽️", googleType: "restaurant" },
+  { value: "cafe", label: "カフェ", icon: "☕", googleType: "cafe" },
+] as const;
 
 export const RATING_CATEGORIES = [
   { key: "living_env", label: "住環境", icon: "🏠" },

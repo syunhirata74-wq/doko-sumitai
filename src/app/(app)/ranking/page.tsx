@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import type { Town, Rating } from "@/types/database";
+import type { Town, Rating, CoupleCondition, ConditionPriority, TownRecommendation } from "@/types/database";
 import { RATING_CATEGORIES, type RatingKey } from "@/types/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ type TownScore = {
 export default function RankingPage() {
   const { profile } = useAuth();
   const [townScores, setTownScores] = useState<TownScore[]>([]);
+  const [recommendations, setRecommendations] = useState<TownRecommendation[]>([]);
   const [compareIds, setCompareIds] = useState<[string, string] | null>(null);
   const [loading, setLoading] = useState(true);
 

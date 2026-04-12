@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import type { Profile } from "@/types/database";
+
+type Station = { c: string; n: string; p: string };
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,7 +59,29 @@ export default function SettingsPage() {
   const [joining, setJoining] = useState(false);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState("");
+  const [stations, setStations] = useState<Station[]>([]);
+  const [workplaceQuery, setWorkplaceQuery] = useState("");
+  const [showStationList, setShowStationList] = useState(false);
+  const [savingWorkplace, setSavingWorkplace] = useState(false);
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    fetch("/stations.json")
+      .then((r) => r.json())
+      .then(setStations);
+  }, []);
+
+  useEffect(() => {
+    if (profile?.workplace_station) {
+      setWorkplaceQuery(profile.workplace_station);
+    }
+  }, [profile?.workplace_station]);
+
+  const filteredStations = useMemo(() => {
+    if (!workplaceQuery.trim()) return [];
+    const q = workplaceQuery.trim().toLowerCase();
+    return stations.filter((s) => s.n.toLowerCase().includes(q)).slice(0, 10);
+  }, [workplaceQuery, stations]);
 
   useEffect(() => {
     const lineResult = searchParams.get("line");
@@ -349,6 +373,99 @@ export default function SettingsPage() {
           {message && (
             <p className="text-sm text-center text-primary">{message}</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Workplace station */}
+      {profile?.couple_id && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">🚃 通勤先</CardTitle>
+            <CardDescription>
+              職場の最寄り駅を設定すると、町ごとの通勤時間がわかります
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Label className="text-xs text-muted-foreground">
+                あなたの職場最寄り駅
+              </Label>
+              <Input
+                value={workplaceQuery}
+                onChange={(e) => {
+                  setWorkplaceQuery(e.target.value);
+                  setShowStationList(true);
+                }}
+                onFocus={() => setShowStationList(true)}
+                placeholder="駅名を入力..."
+                className="h-12 text-base mt-1"
+              />
+              {showStationList && filteredStations.length > 0 && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredStations.map((s) => (
+                    <button
+                      key={s.c}
+                      type="button"
+                      onClick={async () => {
+                        setWorkplaceQuery(s.n + "駅");
+                        setShowStationList(false);
+                        setSavingWorkplace(true);
+                        await supabase
+                          .from("profiles")
+                          .update({
+                            workplace_station: s.n + "駅",
+                            workplace_station_code: s.c,
+                          })
+                          .eq("id", user!.id);
+                        setSavingWorkplace(false);
+                        setMessage("通勤先を保存しました");
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-b-0 flex justify-between"
+                    >
+                      <span className="font-medium">{s.n}駅</span>
+                      <span className="text-xs text-muted-foreground">{s.p}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {profile?.workplace_station && (
+              <p className="text-xs text-primary">
+                ✅ {profile.workplace_station} に設定済み
+              </p>
+            )}
+            {partner?.workplace_station && (
+              <p className="text-xs text-muted-foreground">
+                {partner.name}: {partner.workplace_station}
+              </p>
+            )}
+            {savingWorkplace && (
+              <p className="text-xs text-muted-foreground">保存中...</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* LINE Bot */}
+      <Card>
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#06C755] rounded-full flex items-center justify-center text-white text-lg">
+            💬
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm">LINE Bot</p>
+            <p className="text-xs text-muted-foreground">
+              LINEからもランキングや行きたい町を確認できます
+            </p>
+          </div>
+          <a
+            href="https://line.me/R/ti/p/@503odatl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 bg-[#06C755] text-white text-xs rounded-lg font-medium"
+          >
+            友だち追加
+          </a>
         </CardContent>
       </Card>
 
