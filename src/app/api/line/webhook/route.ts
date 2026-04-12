@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
+import { createHmac } from "crypto";
 
 const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET ?? "";
 const CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN ?? "";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder"
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder"
+  );
+}
 
 function verifySignature(body: string, signature: string): boolean {
-  const hash = crypto
-    .createHmac("SHA256", CHANNEL_SECRET)
+  if (!CHANNEL_SECRET) return false;
+  const hash = createHmac("SHA256", CHANNEL_SECRET)
     .update(body)
     .digest("base64");
   return hash === signature;
@@ -42,7 +44,7 @@ async function handleMessage(event: any) {
   // Commands
   if (text === "ランキング" || text === "らんきんぐ") {
     // Get all couples' towns with ratings
-    const { data: towns } = await supabaseAdmin
+    const { data: towns } = await getSupabaseAdmin()
       .from("towns")
       .select("*, ratings(*)")
       .eq("visited", true)
@@ -99,7 +101,7 @@ async function handleMessage(event: any) {
   }
 
   if (text === "行きたい" || text === "いきたい" || text === "リスト") {
-    const { data: towns } = await supabaseAdmin
+    const { data: towns } = await getSupabaseAdmin()
       .from("towns")
       .select("name, station")
       .eq("visited", false)
@@ -121,7 +123,7 @@ async function handleMessage(event: any) {
   }
 
   if (text === "今週どこ行く" || text === "今週どこ行く？" || text === "おすすめ") {
-    const { data: towns } = await supabaseAdmin
+    const { data: towns } = await getSupabaseAdmin()
       .from("towns")
       .select("name, station")
       .eq("visited", false)
