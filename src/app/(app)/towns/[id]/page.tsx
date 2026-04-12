@@ -5,12 +5,20 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import type { Town, Spot, Rating, Profile } from "@/types/database";
+import type {
+  Town,
+  Spot,
+  Rating,
+  Profile,
+  TownComment,
+  SpotFavorite,
+  TownRent,
+} from "@/types/database";
 import { RATING_CATEGORIES, SPOT_CATEGORIES } from "@/types/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 export default function TownDetailPage() {
   const params = useParams();
@@ -20,6 +28,12 @@ export default function TownDetailPage() {
   const [spots, setSpots] = useState<Spot[]>([]);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [members, setMembers] = useState<Profile[]>([]);
+  const [comments, setComments] = useState<TownComment[]>([]);
+  const [favorites, setFavorites] = useState<SpotFavorite[]>([]);
+  const [rent, setRent] = useState<TownRent | null>(null);
+  const [newComment, setNewComment] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [fetchingRent, setFetchingRent] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,19 +41,34 @@ export default function TownDetailPage() {
   }, [townId]);
 
   async function loadData() {
-    const [townRes, spotsRes, ratingsRes] = await Promise.all([
-      supabase.from("towns").select("*").eq("id", townId).single(),
-      supabase
-        .from("spots")
-        .select("*")
-        .eq("town_id", townId)
-        .order("created_at", { ascending: false }),
-      supabase.from("ratings").select("*").eq("town_id", townId),
-    ]);
+    const [townRes, spotsRes, ratingsRes, commentsRes, favoritesRes, rentRes] =
+      await Promise.all([
+        supabase.from("towns").select("*").eq("id", townId).single(),
+        supabase
+          .from("spots")
+          .select("*")
+          .eq("town_id", townId)
+          .order("created_at", { ascending: false }),
+        supabase.from("ratings").select("*").eq("town_id", townId),
+        supabase
+          .from("town_comments")
+          .select("*")
+          .eq("town_id", townId)
+          .order("created_at", { ascending: true }),
+        supabase.from("spot_favorites").select("*"),
+        supabase
+          .from("town_rents")
+          .select("*")
+          .eq("town_id", townId)
+          .single(),
+      ]);
 
     setTown(townRes.data);
     setSpots(spotsRes.data ?? []);
     setRatings(ratingsRes.data ?? []);
+    setComments(commentsRes.data ?? []);
+    setFavorites(favoritesRes.data ?? []);
+    setRent(rentRes.data);
 
     if (townRes.data?.couple_id) {
       const { data: profilesData } = await supabase
@@ -69,6 +98,83 @@ export default function TownDetailPage() {
     });
     const avg = values.reduce((sum, v) => sum + v.value, 0) / values.length;
     return { avg, values };
+  }
+
+  async function sendComment() {
+    if (!newComment.trim() || !user) return;
+    setSendingComment(true);
+    await supabase.from("town_comments").insert({
+      town_id: townId,
+      user_id: user.id,
+      content: newComment.trim(),
+    });
+    setNewComment("");
+    const { data } = await supabase
+      .from("town_comments")
+      .select("*")
+      .eq("town_id", townId)
+      .order("created_at", { ascending: true });
+    setComments(data ?? []);
+    setSendingComment(false);
+  }
+
+  async function toggleFavorite(spotId: string) {
+    if (!user) return;
+    const existing = favorites.find(
+      (f) => f.spot_id === spotId && f.user_id === user.id
+    );
+    if (existing) {
+      await supabase.from("spot_favorites").delete().eq("id", existing.id);
+      setFavorites(favorites.filter((f) => f.id !== existing.id));
+    } else {
+      const { data } = await supabase
+        .from("spot_favorites")
+        .insert({ spot_id: spotId, user_id: user.id })
+        .select()
+        .single();
+      if (data) setFavorites([...favorites, data]);
+    }
+  }
+
+  async function fetchRent() {
+    if (!town?.station) return;
+    setFetchingRent(true);
+    try {
+      const res = await fetch(
+        `/api/rent?station=${encodeURIComponent(town.station)}`
+      );
+      const data = await res.json();
+      if (data.error) {
+        alert("家賃データの取得に失敗しました");
+        setFetchingRent(false);
+        return;
+      }
+
+      // Save to DB
+      const { data: saved } = await supabase
+        .from("town_rents")
+        .upsert(
+          {
+            town_id: townId,
+            rent_1r: data.rent_1r,
+            rent_1ldk: data.rent_1ldk,
+            rent_2ldk: data.rent_2ldk,
+          },
+          { onConflict: "town_id" }
+        )
+        .select()
+        .single();
+
+      setRent(saved);
+    } catch {
+      alert("家賃データの取得に失敗しました");
+    }
+    setFetchingRent(false);
+  }
+
+  function formatRent(yen: number | null): string {
+    if (yen === null) return "-";
+    return `${(yen / 10000).toFixed(1)}万円`;
   }
 
   if (loading) {
@@ -108,7 +214,7 @@ export default function TownDetailPage() {
             </span>
           )}
           {!town.visited && (
-            <span className="text-orange-500 font-medium">📌 行きたい</span>
+            <span className="text-pink-500 font-medium">📌 行きたい</span>
           )}
         </div>
       </div>
@@ -161,7 +267,64 @@ export default function TownDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Spots */}
+      {/* Rent */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">💰 家賃相場</h2>
+            {town.station && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchRent}
+                disabled={fetchingRent}
+              >
+                {fetchingRent
+                  ? "取得中..."
+                  : rent
+                    ? "更新"
+                    : "家賃を調べる"}
+              </Button>
+            )}
+          </div>
+          {rent ? (
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-muted rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">
+                  1R/1K
+                </div>
+                <div className="font-bold text-primary">
+                  {formatRent(rent.rent_1r)}
+                </div>
+              </div>
+              <div className="bg-muted rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">
+                  1LDK
+                </div>
+                <div className="font-bold text-primary">
+                  {formatRent(rent.rent_1ldk)}
+                </div>
+              </div>
+              <div className="bg-muted rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">
+                  2LDK
+                </div>
+                <div className="font-bold text-primary">
+                  {formatRent(rent.rent_2ldk)}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              {town.station
+                ? "「家賃を調べる」で相場を取得できます"
+                : "最寄り駅を設定すると家賃を調べられます"}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Spots with favorites */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold">スポット</h2>
@@ -183,6 +346,12 @@ export default function TownDetailPage() {
               const cat = SPOT_CATEGORIES.find(
                 (c) => c.value === spot.category
               );
+              const spotFavs = favorites.filter(
+                (f) => f.spot_id === spot.id
+              );
+              const iMyFav = spotFavs.some((f) => f.user_id === user?.id);
+              const bothFav = spotFavs.length >= 2;
+
               return (
                 <Card key={spot.id}>
                   <CardContent className="p-3">
@@ -210,6 +379,19 @@ export default function TownDetailPage() {
                           </p>
                         )}
                       </div>
+                      <button
+                        onClick={() => toggleFavorite(spot.id)}
+                        className="flex flex-col items-center justify-center gap-0.5 px-2 active:scale-90 transition-transform"
+                      >
+                        <span className="text-xl">
+                          {bothFav ? "💕" : iMyFav ? "💗" : "🤍"}
+                        </span>
+                        {spotFavs.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {spotFavs.length}
+                          </span>
+                        )}
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
@@ -218,6 +400,76 @@ export default function TownDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Comments */}
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="font-semibold mb-3">💬 感想</h2>
+          {comments.length > 0 ? (
+            <div className="space-y-3 mb-4">
+              {comments.map((comment) => {
+                const member = members.find((m) => m.id === comment.user_id);
+                const isMe = comment.user_id === user?.id;
+                return (
+                  <div
+                    key={comment.id}
+                    className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}
+                  >
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                      {member?.name?.charAt(0) ?? "?"}
+                    </div>
+                    <div
+                      className={`max-w-[75%] ${isMe ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`px-3 py-2 rounded-2xl text-sm ${
+                          isMe
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted rounded-tl-sm"
+                        }`}
+                      >
+                        {comment.content}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 px-1">
+                        {new Date(comment.created_at).toLocaleDateString(
+                          "ja-JP",
+                          { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2 mb-4">
+              まだ感想がありません
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Input
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="感想を書く..."
+              className="h-10 text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendComment();
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={sendComment}
+              disabled={sendingComment || !newComment.trim()}
+              className="h-10 px-4"
+            >
+              {sendingComment ? "..." : "送信"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

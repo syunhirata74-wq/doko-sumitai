@@ -184,6 +184,105 @@ export type Database = {
           },
         ];
       };
+      town_comments: {
+        Row: {
+          id: string;
+          town_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          town_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          content?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "town_comments_town_id_fkey";
+            columns: ["town_id"];
+            isOneToOne: false;
+            referencedRelation: "towns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "town_comments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      spot_favorites: {
+        Row: {
+          id: string;
+          spot_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          spot_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {};
+        Relationships: [
+          {
+            foreignKeyName: "spot_favorites_spot_id_fkey";
+            columns: ["spot_id"];
+            isOneToOne: false;
+            referencedRelation: "spots";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "spot_favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      town_rents: {
+        Row: {
+          id: string;
+          town_id: string;
+          rent_1r: number | null;
+          rent_1ldk: number | null;
+          rent_2ldk: number | null;
+          fetched_at: string;
+        };
+        Insert: {
+          id?: string;
+          town_id: string;
+          rent_1r?: number | null;
+          rent_1ldk?: number | null;
+          rent_2ldk?: number | null;
+          fetched_at?: string;
+        };
+        Update: {
+          rent_1r?: number | null;
+          rent_1ldk?: number | null;
+          rent_2ldk?: number | null;
+          fetched_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "town_rents_town_id_fkey";
+            columns: ["town_id"];
+            isOneToOne: true;
+            referencedRelation: "towns";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {};
     Functions: {};
@@ -195,6 +294,9 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Town = Database["public"]["Tables"]["towns"]["Row"];
 export type Spot = Database["public"]["Tables"]["spots"]["Row"];
 export type Rating = Database["public"]["Tables"]["ratings"]["Row"];
+export type TownComment = Database["public"]["Tables"]["town_comments"]["Row"];
+export type SpotFavorite = Database["public"]["Tables"]["spot_favorites"]["Row"];
+export type TownRent = Database["public"]["Tables"]["town_rents"]["Row"];
 
 export const RATING_CATEGORIES = [
   { key: "living_env", label: "住環境", icon: "🏠" },
