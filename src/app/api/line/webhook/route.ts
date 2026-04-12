@@ -31,8 +31,29 @@ async function replyMessage(replyToken: string, messages: object[]) {
   });
 }
 
+const APP_URL = "https://doko-sumitai.vercel.app";
+
 function textMessage(text: string) {
   return { type: "text", text };
+}
+
+function appLinkButton(title: string, text: string, path: string = "/") {
+  return {
+    type: "template",
+    altText: `${title} - アプリで見る`,
+    template: {
+      type: "buttons",
+      title,
+      text,
+      actions: [
+        {
+          type: "uri",
+          label: "アプリで見る",
+          uri: `${APP_URL}${path}`,
+        },
+      ],
+    },
+  };
 }
 
 async function handleMessage(event: any) {
@@ -97,6 +118,7 @@ async function handleMessage(event: any) {
 
     return replyMessage(replyToken, [
       textMessage(`🏆 ランキング\n\n${lines.join("\n")}`),
+      appLinkButton("ランキング詳細", "レーダーチャートで比較もできるよ", "/ranking"),
     ]);
   }
 
@@ -119,6 +141,7 @@ async function handleMessage(event: any) {
 
     return replyMessage(replyToken, [
       textMessage(`行きたい町リスト\n\n${lines.join("\n")}`),
+      appLinkButton("町を追加する", "新しい候補を追加しよう", "/towns/new"),
     ]);
   }
 
@@ -142,6 +165,7 @@ async function handleMessage(event: any) {
       textMessage(
         `今週のおすすめ 🎯\n\n${pick.name}${pick.station ? ` (${pick.station})` : ""}\n\nに行ってみない？`
       ),
+      appLinkButton("アプリを開く", "町の詳細や評価をチェック"),
     ]);
   }
 
