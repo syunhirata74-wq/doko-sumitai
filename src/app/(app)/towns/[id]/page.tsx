@@ -428,9 +428,17 @@ export default function TownDetailPage() {
                     key={comment.id}
                     className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}
                   >
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
-                      {member?.name?.charAt(0) ?? "?"}
-                    </div>
+                    {member?.avatar_url ? (
+                      <img
+                        src={member.avatar_url}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                        {member?.name?.charAt(0) ?? "?"}
+                      </div>
+                    )}
                     <div
                       className={`max-w-[75%] ${isMe ? "items-end" : "items-start"}`}
                     >

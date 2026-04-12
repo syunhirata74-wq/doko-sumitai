@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,17 @@ export default function SettingsPage() {
   const [joining, setJoining] = useState(false);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const lineResult = searchParams.get("line");
+    if (lineResult === "success") {
+      setMessage("LINE連携が完了しました！");
+      window.location.reload();
+    } else if (lineResult === "error") {
+      setMessage("LINE連携に失敗しました");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (profile?.couple_id) {
@@ -119,16 +131,36 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">プロフィール</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-xl">
-              {profile?.name?.charAt(0) ?? "?"}
-            </div>
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-xl">
+                {profile?.name?.charAt(0) ?? "?"}
+              </div>
+            )}
             <div>
               <p className="font-medium">{profile?.name}</p>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
+          <Button
+            variant="outline"
+            className="w-full h-12 bg-[#06C755] hover:bg-[#05b34d] text-white border-0 font-medium"
+            onClick={async () => {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session) {
+                window.location.href = `/api/auth/line?token=${session.access_token}`;
+              }
+            }}
+          >
+            {profile?.avatar_url ? "LINE プロフィールを更新" : "LINE と連携する"}
+          </Button>
         </CardContent>
       </Card>
 
