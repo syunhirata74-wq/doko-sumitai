@@ -102,9 +102,14 @@ export default function TownDetailPage() {
         <h1 className="text-xl font-bold">{town.name}</h1>
         <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
           {town.station && <span>🚃 {town.station}</span>}
-          <span>
-            📅 {new Date(town.visited_at).toLocaleDateString("ja-JP")}
-          </span>
+          {town.visited_at && (
+            <span>
+              📅 {new Date(town.visited_at).toLocaleDateString("ja-JP")}
+            </span>
+          )}
+          {!town.visited && (
+            <span className="text-orange-500 font-medium">📌 行きたい</span>
+          )}
         </div>
       </div>
 

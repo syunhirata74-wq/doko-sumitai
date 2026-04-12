@@ -24,6 +24,7 @@ export default function NewTownPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [station, setStation] = useState("");
+  const [visited, setVisited] = useState(true);
   const [visitedAt, setVisitedAt] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -42,7 +43,8 @@ export default function NewTownPage() {
         couple_id: profile.couple_id,
         name,
         station: station || null,
-        visited_at: visitedAt,
+        visited,
+        visited_at: visited ? visitedAt : null,
         lat,
         lng,
       })
@@ -66,6 +68,34 @@ export default function NewTownPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Visited toggle */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setVisited(true)}
+                className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm transition-colors ${
+                  visited
+                    ? "border-primary bg-primary/5 text-primary font-medium"
+                    : "border-border"
+                }`}
+              >
+                <span className="text-lg">✅</span>
+                行った町
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisited(false)}
+                className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm transition-colors ${
+                  !visited
+                    ? "border-primary bg-primary/5 text-primary font-medium"
+                    : "border-border"
+                }`}
+              >
+                <span className="text-lg">📌</span>
+                行きたい町
+              </button>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">町の名前 *</Label>
               <Input
@@ -89,16 +119,18 @@ export default function NewTownPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="visited_at">訪問日</Label>
-              <Input
-                id="visited_at"
-                type="date"
-                value={visitedAt}
-                onChange={(e) => setVisitedAt(e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
+            {visited && (
+              <div className="space-y-2">
+                <Label htmlFor="visited_at">訪問日</Label>
+                <Input
+                  id="visited_at"
+                  type="date"
+                  value={visitedAt}
+                  onChange={(e) => setVisitedAt(e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>場所をタップで選択</Label>

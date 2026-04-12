@@ -55,7 +55,8 @@ export type Database = {
           couple_id: string;
           name: string;
           station: string | null;
-          visited_at: string;
+          visited_at: string | null;
+          visited: boolean;
           lat: number;
           lng: number;
           created_at: string;
@@ -65,7 +66,8 @@ export type Database = {
           couple_id: string;
           name: string;
           station?: string | null;
-          visited_at: string;
+          visited_at?: string | null;
+          visited?: boolean;
           lat: number;
           lng: number;
           created_at?: string;
@@ -73,7 +75,8 @@ export type Database = {
         Update: {
           name?: string;
           station?: string | null;
-          visited_at?: string;
+          visited_at?: string | null;
+          visited?: boolean;
           lat?: number;
           lng?: number;
         };
@@ -195,7 +198,7 @@ export type Rating = Database["public"]["Tables"]["ratings"]["Row"];
 
 export const RATING_CATEGORIES = [
   { key: "living_env", label: "住環境", icon: "🏠" },
-  { key: "transport", label: "交通アク��ス", icon: "🚃" },
+  { key: "transport", label: "交通アクセス", icon: "🚃" },
   { key: "shopping", label: "買い物", icon: "🛒" },
   { key: "nature", label: "自然・公園", icon: "🌳" },
   { key: "dining", label: "飲食店", icon: "🍽️" },
