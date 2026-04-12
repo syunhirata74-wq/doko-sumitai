@@ -311,7 +311,7 @@ export default function TownDetailPage() {
               <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
                 <div className="font-medium text-foreground/70 mb-1.5">検索条件</div>
                 <div className="flex justify-between">
-                  <span>間取り</span><span>2DK・2LDK</span>
+                  <span>間取り</span><span>2LDK</span>
                 </div>
                 <div className="flex justify-between">
                   <span>面積</span><span>40m² 以上</span>

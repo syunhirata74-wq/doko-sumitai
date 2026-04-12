@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 // 同棲向け検索条件
 const SEARCH_CONDITIONS = {
-  madori: "2DK・2LDK",
+  madori: "2LDK",
   area: "40m² 以上",
   walk: "駅徒歩15分以内",
+  rent: "50万円以下",
   method: "中央値（外れ値除外済み）",
 };
 
@@ -27,14 +28,16 @@ export async function GET(request: NextRequest) {
 
   try {
     // 同棲向け条件:
-    // md=09: 2DK, md=10: 2LDK
+    // ta=13,11,14,12: 東京・埼玉・神奈川・千葉 (関東主要)
+    // md=10: 2LDKのみ
     // mb=40: 40m²以上
     // et=15: 徒歩15分以内
     const url =
       `https://suumo.jp/jj/chintai/ichiran/FR301FC001/` +
-      `?ar=030&bs=040&ta=13` +
+      `?ar=030&bs=040` +
+      `&ta=13&ta=11&ta=14&ta=12` +
       `&cb=0.0&ct=9999999` +
-      `&md=09&md=10` +
+      `&md=10` +
       `&mb=40&mt=9999999` +
       `&et=15&cn=9999999` +
       `&pc=50` +
@@ -67,7 +70,8 @@ export async function GET(request: NextRequest) {
 
     while ((match = rentRegex.exec(html)) !== null) {
       const price = parseFloat(match[1]);
-      if (price >= 3 && price <= 100) {
+      // 50万円以下のみ (タワマン・高級物件除外)
+      if (price >= 3 && price <= 50) {
         rawPrices.push(price * 10000);
       }
     }
@@ -81,15 +85,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Remove outliers using IQR method
+    // Remove outliers using IQR method (tight: 1.0x)
     rawPrices.sort((a, b) => a - b);
     const q1Index = Math.floor(rawPrices.length * 0.25);
     const q3Index = Math.floor(rawPrices.length * 0.75);
     const q1 = rawPrices[q1Index];
     const q3 = rawPrices[q3Index];
     const iqr = q3 - q1;
-    const lowerBound = q1 - iqr * 1.5;
-    const upperBound = q3 + iqr * 1.5;
+    const lowerBound = q1 - iqr * 1.0;
+    const upperBound = q3 + iqr * 1.0;
 
     const filtered = rawPrices.filter(
       (p) => p >= lowerBound && p <= upperBound
