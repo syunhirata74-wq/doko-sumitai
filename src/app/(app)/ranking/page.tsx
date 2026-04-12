@@ -128,7 +128,7 @@ export default function RankingPage() {
               <Card
                 key={score.town.id}
                 className={
-                  index === 0 ? "border-yellow-400 border-2" : undefined
+                  index === 0 ? "border-pink-400 border-2" : undefined
                 }
               >
                 <CardContent className="p-4">
@@ -273,15 +273,15 @@ export default function RankingPage() {
                         <Radar
                           name={town1.town.name}
                           dataKey={town1.town.name}
-                          stroke="#3b82f6"
-                          fill="#3b82f6"
+                          stroke="#ec4899"
+                          fill="#ec4899"
                           fillOpacity={0.2}
                         />
                         <Radar
                           name={town2.town.name}
                           dataKey={town2.town.name}
-                          stroke="#f97316"
-                          fill="#f97316"
+                          stroke="#8b5cf6"
+                          fill="#8b5cf6"
                           fillOpacity={0.2}
                         />
                         <Legend />
@@ -306,7 +306,7 @@ export default function RankingPage() {
                           className="flex items-center gap-2 text-sm"
                         >
                           <span
-                            className={`w-8 text-right font-medium ${winner === 1 ? "text-blue-500" : ""}`}
+                            className={`w-8 text-right font-medium ${winner === 1 ? "text-pink-500" : ""}`}
                           >
                             {v1.toFixed(1)}
                           </span>
@@ -314,7 +314,7 @@ export default function RankingPage() {
                             {cat.icon} {cat.label}
                           </div>
                           <span
-                            className={`w-8 font-medium ${winner === 2 ? "text-orange-500" : ""}`}
+                            className={`w-8 font-medium ${winner === 2 ? "text-violet-500" : ""}`}
                           >
                             {v2.toFixed(1)}
                           </span>

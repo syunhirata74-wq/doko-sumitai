@@ -131,8 +131,8 @@ export default function HomePage() {
                     key={star}
                     className={`text-sm ${
                       avg !== null && star <= Math.round(avg)
-                        ? "text-yellow-500"
-                        : "text-gray-200"
+                        ? "text-pink-400"
+                        : "text-pink-100"
                     }`}
                   >
                     ★
