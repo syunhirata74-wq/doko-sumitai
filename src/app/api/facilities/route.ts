@@ -21,32 +21,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // First, geocode the station to get lat/lng
-    const geoUrl =
-      `https://maps.googleapis.com/maps/api/geocode/json` +
-      `?address=${encodeURIComponent(station + " 駅")}` +
-      `&language=ja` +
-      `&key=${GOOGLE_PLACES_API_KEY}`;
-
-    const geoRes = await fetch(geoUrl);
-    const geoData = await geoRes.json();
-
-    if (!geoData.results || geoData.results.length === 0) {
-      return NextResponse.json({ error: "Station not found", facilities: [] });
-    }
-
-    const { lat, lng } = geoData.results[0].geometry.location;
-
-    // Search facilities for each type
     const typeList = types.split(",");
     const allResults: any[] = [];
 
     for (const type of typeList.slice(0, 3)) {
+      // Use Text Search to find facilities near the station
+      const query = `${station}駅 周辺 ${type}`;
       const url =
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
-        `?location=${lat},${lng}` +
-        `&radius=1000` +
-        `&type=${type.trim()}` +
+        `https://maps.googleapis.com/maps/api/place/textsearch/json` +
+        `?query=${encodeURIComponent(query)}` +
         `&language=ja` +
         `&key=${GOOGLE_PLACES_API_KEY}`;
 
@@ -55,14 +38,14 @@ export async function GET(request: NextRequest) {
 
       const data = await res.json();
       if (data.results) {
-        for (const place of data.results.slice(0, 10)) {
+        for (const place of data.results.slice(0, 8)) {
           allResults.push({
             name: place.name,
             type: type.trim(),
             lat: place.geometry.location.lat,
             lng: place.geometry.location.lng,
             rating: place.rating ?? null,
-            address: place.vicinity ?? null,
+            address: place.formatted_address?.replace(/日本、/, "").replace(/〒\d{3}-\d{4}\s*/, "") ?? null,
           });
         }
       }

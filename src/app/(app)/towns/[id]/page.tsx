@@ -324,66 +324,74 @@ export default function TownDetailPage() {
       )}
 
       {/* Commute */}
-      {members.some((m) => m.workplace_station) && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">🚃 通勤チェック</h2>
-              {!fetchingCommute && (
-                <Button variant="outline" size="sm" onClick={() => {
-                  members.forEach((m) => {
-                    if (m.workplace_station && town.station) {
-                      fetchCommute(town.station, m.workplace_station, m.id);
-                    }
-                  });
-                }}>
-                  {Object.keys(commuteData).length > 0 ? "再検索" : "調べる"}
-                </Button>
-              )}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">🚃 通勤チェック</h2>
+            {members.some((m) => m.workplace_station) && town.station && !fetchingCommute && (
+              <Button variant="outline" size="sm" onClick={() => {
+                members.forEach((m) => {
+                  if (m.workplace_station && town.station) {
+                    fetchCommute(town.station, m.workplace_station, m.id);
+                  }
+                });
+              }}>
+                {Object.keys(commuteData).length > 0 ? "再検索" : "調べる"}
+              </Button>
+            )}
+          </div>
+          {!members.some((m) => m.workplace_station) ? (
+            <div className="text-center py-2">
+              <p className="text-sm text-muted-foreground mb-2">職場の最寄り駅を設定すると通勤時間がわかります</p>
+              <Link href="/settings">
+                <Button variant="outline" size="sm">設定ページへ</Button>
+              </Link>
             </div>
-            {fetchingCommute && <p className="text-sm text-muted-foreground text-center py-2">検索中...</p>}
-            {Object.keys(commuteData).length > 0 ? (
-              <div className="space-y-3">
-                {members.filter((m) => m.workplace_station).map((m) => {
-                  const data = commuteData[m.id];
-                  if (!data) return null;
-                  return (
-                    <div key={m.id} className="bg-muted rounded-lg p-3">
-                      <div className="font-medium text-sm mb-1">{m.name}</div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {town.station} → {m.workplace_station}
-                      </div>
-                      {data.minutes ? (
-                        <div className="grid grid-cols-2 gap-2 text-center">
+          ) : fetchingCommute ? (
+            <p className="text-sm text-muted-foreground text-center py-2">検索中...</p>
+          ) : Object.keys(commuteData).length > 0 ? (
+            <div className="space-y-3">
+              {members.filter((m) => m.workplace_station).map((m) => {
+                const data = commuteData[m.id];
+                if (!data) return null;
+                return (
+                  <div key={m.id} className="bg-muted rounded-lg p-3">
+                    <div className="font-medium text-sm mb-1">{m.name}</div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {town.station} → {m.workplace_station}
+                    </div>
+                    {data.minutes ? (
+                      <>
+                        <div className="grid grid-cols-3 gap-2 text-center mb-2">
                           <div>
                             <div className="text-lg font-bold text-primary">{data.minutes}分</div>
-                            <div className="text-xs text-muted-foreground">所要時間</div>
+                            <div className="text-[10px] text-muted-foreground">所要時間</div>
                           </div>
                           <div>
-                            <div className="text-lg font-bold">{data.fare ? `${data.fare}円` : "-"}</div>
-                            <div className="text-xs text-muted-foreground">交通費</div>
+                            <div className="text-lg font-bold">{data.fare ? `${data.fare.toLocaleString()}円` : "-"}</div>
+                            <div className="text-[10px] text-muted-foreground">交通費(片道)</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold">{data.fare ? `${(data.fare * 2 * 20).toLocaleString()}円` : "-"}</div>
+                            <div className="text-[10px] text-muted-foreground">月額(概算)</div>
                           </div>
                         </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">ルートが見つかりませんでした</p>
-                      )}
-                      {data.transitUrl && (
-                        <a href={data.transitUrl} target="_blank" rel="noopener noreferrer" className="block text-center text-xs text-primary underline mt-2">Yahoo!路線で詳しく見る</a>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground text-center py-2">
-                {members.some((m) => m.workplace_station)
-                  ? "「調べる」で通勤時間を検索"
-                  : "設定ページで職場の最寄り駅を設定してください"}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                        {data.transitUrl && (
+                          <a href={data.transitUrl} target="_blank" rel="noopener noreferrer" className="block text-center text-xs text-primary underline">Yahoo!路線でルートを見る</a>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">ルートが見つかりませんでした</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">「調べる」で通勤時間を検索</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Facilities */}
       <Card>
