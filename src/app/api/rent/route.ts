@@ -17,13 +17,17 @@ export async function GET(request: NextRequest) {
     .replace(/\(.*\)$/, "")
     .trim();
 
-  // Also try with 駅 appended for better SUUMO matching
-  const searchTerm = cleanStation;
-
   try {
-    // Search SUUMO for 2DK/2LDK/3K+ rentals (同棲向け)
-    // madori: 06=2DK, 07=2LDK, 08=3K, 09=3DK, 10=3LDK
-    const url = `https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&cb=0.0&ct=9999999&mb=0&mt=9999999&et=15&cn=9999999&shkr1=03&shkr2=03&shkr3=03&shkr4=03&sngz=&po1=25&po2=99&pc=50&fw2=${encodeURIComponent(cleanStation)}`;
+    // Search SUUMO for 1LDK〜2LDK rentals (同棲向け)
+    // md=07: 1LDK, md=09: 2DK, md=10: 2LDK
+    const url =
+      `https://suumo.jp/jj/chintai/ichiran/FR301FC001/` +
+      `?ar=030&bs=040&ta=13` +
+      `&cb=0.0&ct=9999999` +
+      `&md=07&md=09&md=10` +
+      `&et=15&cn=9999999` +
+      `&pc=50` +
+      `&fw2=${encodeURIComponent(cleanStation)}`;
 
     const res = await fetch(url, {
       headers: {
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     const html = await res.text();
 
-    // Extract rent prices - match the --rent class specifically
+    // Extract rent prices from --rent class only (not deposit/gratuity)
     const rentRegex =
       /cassetteitem_price--rent[^>]*><span[^>]*>([\d.]+)万円<\/span>/g;
     const prices: number[] = [];
@@ -52,8 +56,7 @@ export async function GET(request: NextRequest) {
 
     while ((match = rentRegex.exec(html)) !== null) {
       const price = parseFloat(match[1]);
-      // Filter out obviously wrong prices (< 2万 or > 100万)
-      if (price >= 2 && price <= 100) {
+      if (price >= 3 && price <= 100) {
         prices.push(price * 10000);
       }
     }
@@ -66,17 +69,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate average
-    const avg = Math.round(
-      prices.reduce((a, b) => a + b, 0) / prices.length
-    );
+    // Calculate median for more accurate result (less affected by outliers)
+    prices.sort((a, b) => a - b);
+    const mid = Math.floor(prices.length / 2);
+    const median =
+      prices.length % 2 === 0
+        ? Math.round((prices[mid - 1] + prices[mid]) / 2)
+        : prices[mid];
 
     return NextResponse.json({
-      rent_avg: avg,
+      rent_avg: median,
       count: prices.length,
       station: cleanStation,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch rent data" },
       { status: 500 }
