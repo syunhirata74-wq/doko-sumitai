@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 export default function TownDetailPage() {
   const params = useParams();
   const townId = params.id as string;
+  const router = useRouter();
   const { user, profile } = useAuth();
   const [town, setTown] = useState<Town | null>(null);
   const [spots, setSpots] = useState<Spot[]>([]);
@@ -174,6 +175,12 @@ export default function TownDetailPage() {
       alert("家賃データの取得に失敗しました");
     }
     setFetchingRent(false);
+  }
+
+  async function deleteTown() {
+    if (!confirm(`「${town?.name}」を削除しますか？\nスポット・評価・コメントも全て削除されます。`)) return;
+    await supabase.from("towns").delete().eq("id", townId);
+    router.push("/");
   }
 
   function formatRent(yen: number | null): string {
@@ -476,6 +483,14 @@ export default function TownDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete */}
+      <button
+        onClick={deleteTown}
+        className="w-full text-center text-sm text-muted-foreground underline py-2"
+      >
+        この町を削除する
+      </button>
     </div>
   );
 }

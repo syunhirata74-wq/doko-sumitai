@@ -277,11 +277,80 @@ export type Database = {
           },
         ];
       };
+      couple_conditions: {
+        Row: {
+          id: string;
+          couple_id: string;
+          label: string;
+          icon: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          couple_id: string;
+          label: string;
+          icon?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          label?: string;
+          icon?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "couple_conditions_couple_id_fkey";
+            columns: ["couple_id"];
+            isOneToOne: false;
+            referencedRelation: "couples";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      condition_priorities: {
+        Row: {
+          id: string;
+          condition_id: string;
+          user_id: string;
+          weight: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          condition_id: string;
+          user_id: string;
+          weight?: number;
+          created_at?: string;
+        };
+        Update: {
+          weight?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "condition_priorities_condition_id_fkey";
+            columns: ["condition_id"];
+            isOneToOne: false;
+            referencedRelation: "couple_conditions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "condition_priorities_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {};
     Functions: {};
   };
 };
+
+// Workaround: removed extra closing brace
 
 export type Couple = Database["public"]["Tables"]["couples"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -291,6 +360,8 @@ export type Rating = Database["public"]["Tables"]["ratings"]["Row"];
 export type TownComment = Database["public"]["Tables"]["town_comments"]["Row"];
 export type SpotFavorite = Database["public"]["Tables"]["spot_favorites"]["Row"];
 export type TownRent = Database["public"]["Tables"]["town_rents"]["Row"];
+export type CoupleCondition = Database["public"]["Tables"]["couple_conditions"]["Row"];
+export type ConditionPriority = Database["public"]["Tables"]["condition_priorities"]["Row"];
 
 export const RATING_CATEGORIES = [
   { key: "living_env", label: "住環境", icon: "🏠" },
