@@ -323,8 +323,18 @@ export default function TownDetailPage() {
                   <span>算出方法</span><span>中央値（外れ値除外）</span>
                 </div>
                 <div className="text-[10px] mt-1.5 text-center opacity-70">
-                  ※SUUMOの物件検索結果より算出
+                  ※SUUMOの物件検索結果より算出（実際の相場と異なる場合があります）
                 </div>
+                {town.station && (
+                  <a
+                    href={`https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&md=10&et=20&pc=50&fw2=${encodeURIComponent(town.station.replace(/駅$/, ''))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-xs text-primary underline mt-2"
+                  >
+                    SUUMOで物件を見る
+                  </a>
+                )}
               </div>
             </div>
           ) : (
