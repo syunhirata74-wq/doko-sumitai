@@ -3,13 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? "";
 
 export async function GET(request: NextRequest) {
-  const lat = request.nextUrl.searchParams.get("lat");
-  const lng = request.nextUrl.searchParams.get("lng");
-  const types = request.nextUrl.searchParams.get("types"); // comma-separated
+  const station = request.nextUrl.searchParams.get("station");
+  const types = request.nextUrl.searchParams.get("types");
 
-  if (!lat || !lng || !types) {
+  if (!station || !types) {
     return NextResponse.json(
-      { error: "lat, lng, and types are required" },
+      { error: "station and types are required" },
       { status: 400 }
     );
   }
@@ -22,15 +21,31 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // First, geocode the station to get lat/lng
+    const geoUrl =
+      `https://maps.googleapis.com/maps/api/geocode/json` +
+      `?address=${encodeURIComponent(station + " 駅")}` +
+      `&language=ja` +
+      `&key=${GOOGLE_PLACES_API_KEY}`;
+
+    const geoRes = await fetch(geoUrl);
+    const geoData = await geoRes.json();
+
+    if (!geoData.results || geoData.results.length === 0) {
+      return NextResponse.json({ error: "Station not found", facilities: [] });
+    }
+
+    const { lat, lng } = geoData.results[0].geometry.location;
+
+    // Search facilities for each type
     const typeList = types.split(",");
     const allResults: any[] = [];
 
     for (const type of typeList.slice(0, 3)) {
-      // Limit to 3 types per request
       const url =
         `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
         `?location=${lat},${lng}` +
-        `&radius=1000` + // 1km radius
+        `&radius=1000` +
         `&type=${type.trim()}` +
         `&language=ja` +
         `&key=${GOOGLE_PLACES_API_KEY}`;

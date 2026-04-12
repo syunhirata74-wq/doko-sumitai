@@ -158,11 +158,11 @@ export default function TownDetailPage() {
   }
 
   async function fetchFacilitiesData() {
-    if (selectedFacilityTypes.length === 0 || !town) return;
+    if (selectedFacilityTypes.length === 0 || !town?.station) return;
     setFetchingFacilities(true);
     try {
       const types = selectedFacilityTypes.join(",");
-      const res = await fetch(`/api/facilities?lat=${town.lat}&lng=${town.lng}&types=${types}`);
+      const res = await fetch(`/api/facilities?station=${encodeURIComponent(town.station)}&types=${types}`);
       const data = await res.json();
       if (data.error) {
         if (res.status === 503) {
