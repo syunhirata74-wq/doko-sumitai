@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
     `&client_id=${LINE_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(LINE_REDIRECT_URI)}` +
     `&state=${state}` +
-    `&scope=profile%20openid`;
+    `&scope=profile%20openid` +
+    `&bot_prompt=aggressive`;
 
   return NextResponse.redirect(lineAuthUrl);
 }
