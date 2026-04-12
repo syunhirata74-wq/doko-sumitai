@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import type { Profile } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,8 +17,41 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+function Avatar({
+  profile,
+  size = "md",
+}: {
+  profile: Profile | null | undefined;
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClass =
+    size === "lg"
+      ? "w-16 h-16 text-2xl"
+      : size === "md"
+        ? "w-12 h-12 text-xl"
+        : "w-8 h-8 text-sm";
+
+  if (profile?.avatar_url) {
+    return (
+      <img
+        src={profile.avatar_url}
+        alt={profile.name}
+        className={`${sizeClass} rounded-full object-cover`}
+      />
+    );
+  }
+  return (
+    <div
+      className={`${sizeClass} bg-primary/10 rounded-full flex items-center justify-center`}
+    >
+      {profile?.name?.charAt(0) ?? "?"}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user, profile, signOut } = useAuth();
+  const [partner, setPartner] = useState<Profile | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [myInviteCode, setMyInviteCode] = useState("");
   const [joining, setJoining] = useState(false);
@@ -37,19 +71,39 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile?.couple_id) {
-      loadInviteCode();
+      loadCoupleData();
     }
   }, [profile?.couple_id]);
 
-  async function loadInviteCode() {
+  async function loadCoupleData() {
     const coupleId = profile?.couple_id;
     if (!coupleId) return;
-    const { data } = await supabase
-      .from("couples")
-      .select("*")
-      .eq("id", coupleId as string)
-      .single();
-    if (data) setMyInviteCode(data.invite_code);
+
+    const [coupleRes, membersRes] = await Promise.all([
+      supabase
+        .from("couples")
+        .select("*")
+        .eq("id", coupleId as string)
+        .single(),
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("couple_id", coupleId as string),
+    ]);
+
+    if (coupleRes.data) setMyInviteCode(coupleRes.data.invite_code);
+
+    const partnerProfile = membersRes.data?.find((m) => m.id !== user?.id);
+    setPartner(partnerProfile ?? null);
+  }
+
+  async function connectLine() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      window.location.href = `/api/auth/line?token=${session.access_token}`;
+    }
   }
 
   async function createCouple() {
@@ -77,8 +131,6 @@ export default function SettingsPage() {
     setMyInviteCode(data.invite_code);
     setMessage("カップルを作成しました！");
     setCreating(false);
-
-    // Reload page to refresh profile
     window.location.reload();
   }
 
@@ -106,7 +158,6 @@ export default function SettingsPage() {
 
     setMessage("カップルに参加しました！");
     setJoining(false);
-
     window.location.reload();
   }
 
@@ -126,45 +177,104 @@ export default function SettingsPage() {
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">設定</h1>
 
-      {/* Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">プロフィール</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-xl">
-                {profile?.name?.charAt(0) ?? "?"}
+      {/* Two profiles side by side */}
+      {profile?.couple_id && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">ふたりのプロフィール</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Me */}
+              <div className="text-center space-y-2">
+                <div className="flex justify-center">
+                  <Avatar profile={profile} size="lg" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{profile?.name}</p>
+                  {profile?.avatar_url ? (
+                    <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
+                      LINE連携済み
+                    </span>
+                  ) : (
+                    <button
+                      onClick={connectLine}
+                      className="text-[10px] text-white bg-[#06C755] px-1.5 py-0.5 rounded-full"
+                    >
+                      LINE連携する
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-            <div>
-              <p className="font-medium">{profile?.name}</p>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full h-12 bg-[#06C755] hover:bg-[#05b34d] text-white border-0 font-medium"
-            onClick={async () => {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session) {
-                window.location.href = `/api/auth/line?token=${session.access_token}`;
-              }
-            }}
-          >
-            {profile?.avatar_url ? "LINE プロフィールを更新" : "LINE と連携する"}
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Couple */}
+              {/* Partner */}
+              <div className="text-center space-y-2">
+                {partner ? (
+                  <>
+                    <div className="flex justify-center">
+                      <Avatar profile={partner} size="lg" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{partner.name}</p>
+                      {partner.avatar_url ? (
+                        <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
+                          LINE連携済み
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">
+                          LINE未連携
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-center">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center text-2xl border-2 border-dashed border-muted-foreground/30">
+                        ?
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      相手の参加を待っています
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* LINE connect button if not connected */}
+            {!profile?.avatar_url && (
+              <Button
+                variant="outline"
+                className="w-full h-12 mt-4 bg-[#06C755] hover:bg-[#05b34d] text-white border-0 font-medium"
+                onClick={connectLine}
+              >
+                LINE と連携する
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* My profile (when no couple) */}
+      {!profile?.couple_id && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">プロフィール</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Avatar profile={profile} />
+              <div>
+                <p className="font-medium">{profile?.name}</p>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Couple settings */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">カップル設定</CardTitle>
@@ -193,7 +303,9 @@ export default function SettingsPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                このコードを相手に送って参加してもらいましょう
+                {partner
+                  ? `${partner.name} と接続中`
+                  : "このコードを相手に送って参加してもらいましょう"}
               </p>
             </div>
           ) : (
