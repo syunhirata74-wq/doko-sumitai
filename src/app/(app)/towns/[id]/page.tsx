@@ -300,11 +300,12 @@ export default function TownDetailPage() {
             <h2 className="font-semibold mb-3">🚚 引っ越し初期費用</h2>
             <div className="space-y-2 text-sm">
               {[
-                { label: "敷金（1ヶ月）", amount: rentAvg },
+                { label: "敷金（0〜1ヶ月）", amount: 0 },
                 { label: "礼金（1ヶ月）", amount: rentAvg },
-                { label: "仲介手数料（1ヶ月）", amount: rentAvg },
+                { label: "仲介手数料（0.5ヶ月）", amount: Math.round(rentAvg * 0.5) },
                 { label: "前家賃（1ヶ月）", amount: rentAvg },
                 { label: "火災保険", amount: 20000 },
+                { label: "鍵交換", amount: 15000 },
                 { label: "引っ越し業者（2人分）", amount: 80000 },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between">
@@ -313,11 +314,11 @@ export default function TownDetailPage() {
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between font-bold text-base">
-                <span>合計</span>
-                <span className="text-primary">{formatYen(rentAvg * 4 + 100000)}</span>
+                <span>合計目安</span>
+                <span className="text-primary">{formatYen(Math.round(rentAvg * 2.5) + 115000)}</span>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-2">※ 概算です。物件により異なります</p>
+            <p className="text-[10px] text-muted-foreground text-center mt-2">※ 概算です。敷金0の物件も多いです</p>
           </CardContent>
         </Card>
       )}
