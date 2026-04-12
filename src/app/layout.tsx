@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "どこ住みたい",
   },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -29,7 +32,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#ffffff",
+  themeColor: "#ec4899",
 };
 
 export default function RootLayout({
