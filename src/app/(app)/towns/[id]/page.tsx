@@ -314,10 +314,10 @@ export default function TownDetailPage() {
                   <span>間取り</span><span>2LDK</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>面積</span><span>40m² 以上</span>
+                  <span>駅徒歩</span><span>15分以内</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>駅徒歩</span><span>15分以内</span>
+                  <span>家賃上限</span><span>50万円以下</span>
                 </div>
                 <div className="flex justify-between">
                   <span>算出方法</span><span>中央値（外れ値除外）</span>
