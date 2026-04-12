@@ -150,6 +150,12 @@ export default function TownDetailPage() {
         return;
       }
 
+      if (data.rent_avg === null) {
+        alert("この町の家賃データが見つかりませんでした");
+        setFetchingRent(false);
+        return;
+      }
+
       // Save to DB
       const { data: saved } = await supabase
         .from("town_rents")
@@ -286,15 +292,32 @@ export default function TownDetailPage() {
             )}
           </div>
           {rent && rent.rent_avg ? (
-            <div className="text-center bg-muted rounded-lg p-4">
-              <div className="text-xs text-muted-foreground mb-1">
-                周辺の平均家賃
+            <div className="space-y-3">
+              <div className="text-center bg-muted rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">
+                  同棲向け家賃の目安
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {formatRent(rent.rent_avg)}
+                </div>
               </div>
-              <div className="text-2xl font-bold text-primary">
-                {formatRent(rent.rent_avg)}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                ※SUUMOの検索結果より算出
+              <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+                <div className="font-medium text-foreground/70 mb-1.5">検索条件</div>
+                <div className="flex justify-between">
+                  <span>間取り</span><span>2DK・2LDK</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>面積</span><span>40m² 以上</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>駅徒歩</span><span>15分以内</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>算出方法</span><span>中央値（外れ値除外）</span>
+                </div>
+                <div className="text-[10px] mt-1.5 text-center opacity-70">
+                  ※SUUMOの物件検索結果より算出
+                </div>
               </div>
             </div>
           ) : (

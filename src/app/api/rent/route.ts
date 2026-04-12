@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// 同棲向け検索条件
+const SEARCH_CONDITIONS = {
+  madori: "2DK・2LDK",
+  area: "40m² 以上",
+  walk: "駅徒歩15分以内",
+  method: "中央値（外れ値除外済み）",
+};
+
 export async function GET(request: NextRequest) {
   const station = request.nextUrl.searchParams.get("station");
   if (!station) {
@@ -18,13 +26,16 @@ export async function GET(request: NextRequest) {
     .trim();
 
   try {
-    // Search SUUMO for 1LDK〜2LDK rentals (同棲向け)
-    // md=07: 1LDK, md=09: 2DK, md=10: 2LDK
+    // 同棲向け条件:
+    // md=09: 2DK, md=10: 2LDK
+    // mb=40: 40m²以上
+    // et=15: 徒歩15分以内
     const url =
       `https://suumo.jp/jj/chintai/ichiran/FR301FC001/` +
       `?ar=030&bs=040&ta=13` +
       `&cb=0.0&ct=9999999` +
-      `&md=07&md=09&md=10` +
+      `&md=09&md=10` +
+      `&mb=40&mt=9999999` +
       `&et=15&cn=9999999` +
       `&pc=50` +
       `&fw2=${encodeURIComponent(cleanStation)}`;
@@ -48,28 +59,44 @@ export async function GET(request: NextRequest) {
 
     const html = await res.text();
 
-    // Extract rent prices from --rent class only (not deposit/gratuity)
+    // Extract rent prices from --rent class only
     const rentRegex =
       /cassetteitem_price--rent[^>]*><span[^>]*>([\d.]+)万円<\/span>/g;
-    const prices: number[] = [];
+    const rawPrices: number[] = [];
     let match;
 
     while ((match = rentRegex.exec(html)) !== null) {
       const price = parseFloat(match[1]);
       if (price >= 3 && price <= 100) {
-        prices.push(price * 10000);
+        rawPrices.push(price * 10000);
       }
     }
 
-    if (prices.length === 0) {
+    if (rawPrices.length === 0) {
       return NextResponse.json({
         rent_avg: null,
         count: 0,
         station: cleanStation,
+        conditions: SEARCH_CONDITIONS,
       });
     }
 
-    // Calculate median for more accurate result (less affected by outliers)
+    // Remove outliers using IQR method
+    rawPrices.sort((a, b) => a - b);
+    const q1Index = Math.floor(rawPrices.length * 0.25);
+    const q3Index = Math.floor(rawPrices.length * 0.75);
+    const q1 = rawPrices[q1Index];
+    const q3 = rawPrices[q3Index];
+    const iqr = q3 - q1;
+    const lowerBound = q1 - iqr * 1.5;
+    const upperBound = q3 + iqr * 1.5;
+
+    const filtered = rawPrices.filter(
+      (p) => p >= lowerBound && p <= upperBound
+    );
+    const prices = filtered.length > 0 ? filtered : rawPrices;
+
+    // Calculate median
     prices.sort((a, b) => a - b);
     const mid = Math.floor(prices.length / 2);
     const median =
@@ -77,10 +104,17 @@ export async function GET(request: NextRequest) {
         ? Math.round((prices[mid - 1] + prices[mid]) / 2)
         : prices[mid];
 
+    // Min/max for range display
+    const min = prices[0];
+    const max = prices[prices.length - 1];
+
     return NextResponse.json({
       rent_avg: median,
+      rent_min: min,
+      rent_max: max,
       count: prices.length,
       station: cleanStation,
+      conditions: SEARCH_CONDITIONS,
     });
   } catch {
     return NextResponse.json(
