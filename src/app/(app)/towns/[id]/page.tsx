@@ -137,12 +137,18 @@ export default function TownDetailPage() {
     }
   }
 
+  function getSobaUrl(): string | null {
+    if (!town?.station_code) return null;
+    // Determine pref from stations.json is complex, so use a simpler approach
+    return `https://suumo.jp/chintai/soba/tokyo/ek_${town.station_code}/`;
+  }
+
   async function fetchRent() {
-    if (!town?.station) return;
+    if (!town?.station_code) return;
     setFetchingRent(true);
     try {
       const res = await fetch(
-        `/api/rent?station=${encodeURIComponent(town.station)}`
+        `/api/rent?code=${town.station_code}`
       );
       const data = await res.json();
       if (data.error) {
@@ -216,7 +222,15 @@ export default function TownDetailPage() {
         >
           ← 戻る
         </Link>
-        <h1 className="text-xl font-bold">{town.name}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">{town.name}</h1>
+          <button
+            onClick={deleteTown}
+            className="text-xs text-muted-foreground px-2 py-1 border rounded-md"
+          >
+            削除
+          </button>
+        </div>
         <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
           {town.station && <span>🚃 {town.station}</span>}
           {town.visited_at && (
@@ -283,7 +297,7 @@ export default function TownDetailPage() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">💰 家賃相場</h2>
-            {town.station && (
+            {town.station_code && (
               <Button
                 variant="outline"
                 size="sm"
@@ -308,40 +322,25 @@ export default function TownDetailPage() {
                   {formatRent(rent.rent_avg)}
                 </div>
               </div>
-              <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
-                <div className="font-medium text-foreground/70 mb-1.5">検索条件</div>
-                <div className="flex justify-between">
-                  <span>間取り</span><span>2LDK</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>駅徒歩</span><span>15分以内</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>家賃上限</span><span>50万円以下</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>算出方法</span><span>中央値（外れ値除外）</span>
-                </div>
-                <div className="text-[10px] mt-1.5 text-center opacity-70">
-                  ※SUUMOの物件検索結果より算出（実際の相場と異なる場合があります）
-                </div>
-                {town.station && (
-                  <a
-                    href={`https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&md=10&et=20&pc=50&fw2=${encodeURIComponent(town.station.replace(/駅$/, ''))}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center text-xs text-primary underline mt-2"
-                  >
-                    SUUMOで物件を見る
-                  </a>
-                )}
+              <div className="text-center text-xs text-muted-foreground mt-2">
+                ※ SUUMOの相場ページ（2LDK）より取得
               </div>
+              {getSobaUrl() && (
+                <a
+                  href={getSobaUrl()!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center text-xs text-primary underline mt-1"
+                >
+                  SUUMOで相場を確認する
+                </a>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-2">
-              {town.station
+              {town.station_code
                 ? "「家賃を調べる」で相場を取得できます"
-                : "最寄り駅を設定すると家賃を調べられます"}
+                : "駅コードがない町は家賃を取得できません"}
             </p>
           )}
         </CardContent>
@@ -502,13 +501,6 @@ export default function TownDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Delete */}
-      <button
-        onClick={deleteTown}
-        className="w-full text-center text-sm text-muted-foreground underline py-2"
-      >
-        この町を削除する
-      </button>
     </div>
   );
 }

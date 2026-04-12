@@ -55,6 +55,7 @@ export type Database = {
           couple_id: string;
           name: string;
           station: string | null;
+          station_code: string | null;
           visited_at: string | null;
           visited: boolean;
           lat: number;
@@ -66,6 +67,7 @@ export type Database = {
           couple_id: string;
           name: string;
           station?: string | null;
+          station_code?: string | null;
           visited_at?: string | null;
           visited?: boolean;
           lat: number;
@@ -75,6 +77,7 @@ export type Database = {
         Update: {
           name?: string;
           station?: string | null;
+          station_code?: string | null;
           visited_at?: string | null;
           visited?: boolean;
           lat?: number;
