@@ -24,6 +24,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import dynamic from "next/dynamic";
+
+const FacilityMap = dynamic(() => import("@/components/facility-map"), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-muted rounded-lg flex items-center justify-center text-sm text-muted-foreground">地図を読み込み中...</div>,
+});
 
 export default function TownDetailPage() {
   const params = useParams();
@@ -423,21 +429,27 @@ export default function TownDetailPage() {
             </Button>
           )}
           {facilities.length > 0 && (
-            <div className="space-y-1.5 max-h-60 overflow-y-auto">
-              {facilities.map((f, i) => {
-                const ft = FACILITY_TYPES.find((t) => t.googleType === f.type);
-                return (
-                  <div key={i} className="flex items-center gap-2 text-sm py-1.5 border-b last:border-0">
-                    <span>{ft?.icon ?? "📍"}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-medium text-xs">{f.name}</div>
-                      {f.address && <div className="text-[10px] text-muted-foreground truncate">{f.address}</div>}
+            <>
+              <FacilityMap
+                facilities={facilities}
+                typeIcons={Object.fromEntries(FACILITY_TYPES.map((t) => [t.googleType, t.icon]))}
+              />
+              <div className="space-y-1.5 max-h-48 overflow-y-auto mt-3">
+                {facilities.map((f, i) => {
+                  const ft = FACILITY_TYPES.find((t) => t.googleType === f.type);
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-sm py-1.5 border-b last:border-0">
+                      <span>{ft?.icon ?? "📍"}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium text-xs">{f.name}</div>
+                        {f.address && <div className="text-[10px] text-muted-foreground truncate">{f.address}</div>}
+                      </div>
+                      {f.rating && <span className="text-xs text-muted-foreground">★{f.rating}</span>}
                     </div>
-                    {f.rating && <span className="text-xs text-muted-foreground">★{f.rating}</span>}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
           {facilities.length === 0 && selectedFacilityTypes.length > 0 && !fetchingFacilities && (
             <p className="text-xs text-muted-foreground text-center">施設を選択して「周辺を検索」を押してください</p>
