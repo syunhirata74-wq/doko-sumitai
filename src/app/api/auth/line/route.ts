@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const LINE_CLIENT_ID = process.env.LINE_LOGIN_CLIENT_ID ?? "2009776425";
+const LINE_CLIENT_ID = "2009776425";
 const LINE_REDIRECT_URI = process.env.NEXT_PUBLIC_SITE_URL
   ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/line/callback`
   : "https://doko-sumitai.vercel.app/api/auth/line/callback";

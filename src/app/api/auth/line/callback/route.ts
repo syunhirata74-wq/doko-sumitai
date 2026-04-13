@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import crypto from "crypto";
+import { createHash } from "crypto";
 
-const LINE_CLIENT_ID = process.env.LINE_LOGIN_CLIENT_ID ?? "2009776425";
-const LINE_CLIENT_SECRET =
-  process.env.LINE_LOGIN_CLIENT_SECRET ?? "2cf55c65a0628afb980423d09d917a11";
+const LINE_CLIENT_ID = "2009776425";
+const LINE_CLIENT_SECRET = "2cf55c65a0628afb980423d09d917a11";
 const LINE_REDIRECT_URI = process.env.NEXT_PUBLIC_SITE_URL
   ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/line/callback`
   : "https://doko-sumitai.vercel.app/api/auth/line/callback";
@@ -75,8 +74,7 @@ export async function GET(request: NextRequest) {
       // Check if a profile with this LINE user ID exists
       const lineUserId = lineProfile.userId;
       const email = `line_${lineUserId}@doko-sumitai.app`;
-      const password = crypto
-        .createHash("sha256")
+      const password = createHash("sha256")
         .update(`line_${lineUserId}_${LINE_CLIENT_SECRET}`)
         .digest("hex");
 
