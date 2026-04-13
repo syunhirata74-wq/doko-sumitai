@@ -401,7 +401,7 @@ export default function SettingsPage() {
                 className="h-12 text-base mt-1"
               />
               {showStationList && filteredStations.length > 0 && (
-                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg max-h-64 overflow-y-auto">
                   {filteredStations.map((s) => (
                     <button
                       key={s.c}
@@ -419,13 +419,12 @@ export default function SettingsPage() {
                           .eq("id", user!.id);
                         setSavingWorkplace(false);
                         setMessage(`✅ 通勤先を「${s.n}駅」に設定しました`);
-                        // Reload to refresh profile data
                         setTimeout(() => window.location.reload(), 1000);
                       }}
-                      className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-b-0 flex justify-between"
+                      className="w-full text-left px-4 py-3 min-h-[48px] text-base hover:bg-muted border-b last:border-b-0 flex justify-between items-center"
                     >
                       <span className="font-medium">{s.n}駅</span>
-                      <span className="text-xs text-muted-foreground">{s.p}</span>
+                      <span className="text-sm text-muted-foreground">{s.p}</span>
                     </button>
                   ))}
                 </div>
