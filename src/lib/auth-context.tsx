@@ -28,6 +28,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Handle LINE login redirect (session tokens in URL hash)
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const type = params.get("type");
+
+      if (accessToken && refreshToken && type === "line_login") {
+        window.location.hash = "";
+        supabase.auth
+          .setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ data: { session } }) => {
+            if (session?.user) {
+              setUser(session.user);
+              fetchProfile(session.user.id);
+            }
+          });
+        return;
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {

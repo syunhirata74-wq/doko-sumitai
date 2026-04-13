@@ -100,6 +100,17 @@ export default function LoginPage() {
                   : "ログイン"}
             </Button>
           </form>
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">または</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <a
+            href="/api/auth/line?mode=login"
+            className="flex items-center justify-center gap-2 w-full h-12 bg-[#06C755] hover:bg-[#05b34d] text-white rounded-lg font-medium text-base mt-4 transition-colors"
+          >
+            LINEでログイン
+          </a>
           <div className="mt-4 text-center">
             <button
               type="button"
