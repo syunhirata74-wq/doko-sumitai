@@ -85,11 +85,17 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const lineResult = searchParams.get("line");
+    const lineReason = searchParams.get("reason");
     if (lineResult === "success") {
       setMessage("LINE連携が完了しました！");
       window.location.reload();
     } else if (lineResult === "error") {
-      setMessage("LINE連携に失敗しました");
+      const reasons: Record<string, string> = {
+        token: "LINEの認証に失敗しました。もう一度お試しください",
+        profile: "LINEプロフィールの取得に失敗しました",
+        auth: "ログインセッションが切れています。再ログインしてからお試しください",
+      };
+      setMessage(reasons[lineReason ?? ""] ?? "LINE連携に失敗しました。もう一度お試しください");
     }
   }, [searchParams]);
 

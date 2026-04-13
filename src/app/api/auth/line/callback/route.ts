@@ -44,8 +44,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error("LINE token exchange failed:", tokenRes.status, errText);
       return NextResponse.redirect(
-        new URL("/settings?line=error", request.url)
+        new URL("/settings?line=error&reason=token", request.url)
       );
     }
 
@@ -57,8 +59,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!profileRes.ok) {
+      console.error("LINE profile fetch failed:", profileRes.status);
       return NextResponse.redirect(
-        new URL("/settings?line=error", request.url)
+        new URL("/settings?line=error&reason=profile", request.url)
       );
     }
 
@@ -71,11 +74,13 @@ export async function GET(request: NextRequest) {
     );
     const {
       data: { user },
+      error: authError,
     } = await supabaseClient.auth.getUser(state.token);
 
-    if (!user) {
+    if (!user || authError) {
+      console.error("Supabase auth failed:", authError?.message);
       return NextResponse.redirect(
-        new URL("/settings?line=error", request.url)
+        new URL("/settings?line=error&reason=auth", request.url)
       );
     }
 
