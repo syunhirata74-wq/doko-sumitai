@@ -401,7 +401,7 @@ export default function SettingsPage() {
                 className="h-12 text-base mt-1"
               />
               {showStationList && filteredStations.length > 0 && (
-                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                <div className="mt-2 space-y-2">
                   {filteredStations.map((s) => (
                     <button
                       key={s.c}
@@ -421,9 +421,9 @@ export default function SettingsPage() {
                         setMessage(`✅ 通勤先を「${s.n}駅」に設定しました`);
                         setTimeout(() => window.location.reload(), 1000);
                       }}
-                      className="w-full text-left px-4 py-3 min-h-[48px] text-base hover:bg-muted border-b last:border-b-0 flex justify-between items-center"
+                      className="w-full text-left px-4 py-4 bg-muted rounded-lg text-base flex justify-between items-center active:scale-[0.98] transition-transform"
                     >
-                      <span className="font-medium">{s.n}駅</span>
+                      <span className="font-medium text-base">🚃 {s.n}駅</span>
                       <span className="text-sm text-muted-foreground">{s.p}</span>
                     </button>
                   ))}
