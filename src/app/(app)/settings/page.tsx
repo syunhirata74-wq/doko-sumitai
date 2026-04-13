@@ -418,7 +418,9 @@ export default function SettingsPage() {
                           })
                           .eq("id", user!.id);
                         setSavingWorkplace(false);
-                        setMessage("通勤先を保存しました");
+                        setMessage(`✅ 通勤先を「${s.n}駅」に設定しました`);
+                        // Reload to refresh profile data
+                        setTimeout(() => window.location.reload(), 1000);
                       }}
                       className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-b-0 flex justify-between"
                     >
